@@ -44,6 +44,7 @@ export interface ItemListLayoutProps<T extends ItemObject = ItemObject> {
   preloadStores?: boolean;
   isClusterScoped?: boolean;
   hideFilters?: boolean;
+  resizable?: boolean;
   searchFilters?: SearchFilter<T>[];
   filterItems?: ItemsFilter<T>[];
 
@@ -100,6 +101,7 @@ interface ItemListLayoutUserSettings {
 @observer
 export class ItemListLayout extends React.Component<ItemListLayoutProps> {
   static defaultProps = defaultProps as object;
+  private cellSizes: Array<number>;
 
   @observable userSettings: ItemListLayoutUserSettings = {
     showAppliedFilters: false,
@@ -111,6 +113,8 @@ export class ItemListLayout extends React.Component<ItemListLayoutProps> {
     // keep ui user settings in local storage
     const defaultUserSettings = toJS(this.userSettings);
     const storage = createStorage<ItemListLayoutUserSettings>("items_list_layout", defaultUserSettings);
+
+    this.cellSizes = new Array<number>(props.renderTableHeader.length);
 
     Object.assign(this.userSettings, storage.get()); // restore
     disposeOnUnmount(this, [
@@ -225,7 +229,7 @@ export class ItemListLayout extends React.Component<ItemListLayoutProps> {
   getRow(uid: string) {
     const {
       isSelectable, renderTableHeader, renderTableContents, renderItemMenu,
-      store, hasDetailsView, onDetails,
+      store, hasDetailsView, onDetails, resizable,
       copyClassNameFromHeadCells, customizeTableRowProps, detailsItem,
     } = this.props;
     const { isSelected } = store;
@@ -255,13 +259,18 @@ export class ItemListLayout extends React.Component<ItemListLayoutProps> {
           renderTableContents(item).map((content, index) => {
             const cellProps: TableCellProps = isReactNode(content) ? { children: content } : content;
             const headCell = renderTableHeader?.[index];
+            const cellSize = this.cellSizes[index];
 
             if (copyClassNameFromHeadCells && headCell) {
               cellProps.className = cssNames(cellProps.className, headCell.className);
             }
 
+            if (cellSize !== undefined) {
+              cellProps.size = cellSize;
+            }
+
             if (!headCell || !this.isHiddenColumn(headCell)) {
-              return <TableCell key={index} {...cellProps} />;
+              return <TableCell resizable key={index} {...cellProps} />;
             }
           })
         }
@@ -393,7 +402,7 @@ export class ItemListLayout extends React.Component<ItemListLayoutProps> {
   }
 
   renderTableHeader() {
-    const { customizeTableRowProps, renderTableHeader, isSelectable, isConfigurable, store } = this.props;
+    const { customizeTableRowProps, renderTableHeader, isSelectable, isConfigurable, store, resizable } = this.props;
 
     if (!renderTableHeader) {
       return;
@@ -411,8 +420,17 @@ export class ItemListLayout extends React.Component<ItemListLayoutProps> {
           />
         )}
         {renderTableHeader.map((cellProps, index) => {
+          const cellSize = this.cellSizes[index];
+          const _cellProps = resizable ?
+            { ...cellProps, _onResize: (width: number) => this.cellSizes[index] = width } :
+            cellProps;
+
+          if (cellSize !== undefined) {
+            _cellProps.size = cellSize;
+          }
+
           if (!this.isHiddenColumn(cellProps)) {
-            return <TableCell key={cellProps.id ?? index} {...cellProps} />;
+            return <TableCell resizable key={cellProps.id ?? index} {..._cellProps} />;
           }
         })}
         <TableCell className="menu">
