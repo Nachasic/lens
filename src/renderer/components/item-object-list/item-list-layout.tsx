@@ -79,10 +79,6 @@ export interface ItemListLayoutProps<T extends ItemObject = ItemObject> {
   renderFooter?: (parent: ItemListLayout) => React.ReactNode;
 }
 
-interface ItemListLayoutState {
-  cellSizes: number[];
-}
-
 const defaultProps: Partial<ItemListLayoutProps> = {
   showHeader: true,
   isSearchable: true,
@@ -103,12 +99,14 @@ interface ItemListLayoutUserSettings {
 }
 
 @observer
-export class ItemListLayout extends React.Component<ItemListLayoutProps, ItemListLayoutState> {
+export class ItemListLayout extends React.Component<ItemListLayoutProps> {
   static defaultProps = defaultProps as object;
 
   @observable userSettings: ItemListLayoutUserSettings = {
     showAppliedFilters: false,
   };
+
+  @observable cellSizes: number[];
 
   constructor(props: ItemListLayoutProps) {
     super(props);
@@ -117,10 +115,8 @@ export class ItemListLayout extends React.Component<ItemListLayoutProps, ItemLis
     const defaultUserSettings = toJS(this.userSettings);
     const storage = createStorage<ItemListLayoutUserSettings>("items_list_layout", defaultUserSettings);
 
-    // this.cellSizes = new Array<number>(props.renderTableHeader.length);
-    this.state = {
-      cellSizes: new Array<number>(props.renderTableHeader.length)
-    };
+    // create a registry to remember column sizes
+    this.cellSizes = new Array<number>(props.renderTableHeader.length);
 
     Object.assign(this.userSettings, storage.get()); // restore
     disposeOnUnmount(this, [
@@ -232,10 +228,7 @@ export class ItemListLayout extends React.Component<ItemListLayoutProps, ItemLis
   }
 
   handleCellResize(index: number, width: number) {
-    const cellSizes = [...this.state.cellSizes];
-
-    cellSizes[index] = width;
-    this.setState({ cellSizes });
+    this.cellSizes[index] = width;
   }
 
   @autobind()
@@ -272,7 +265,7 @@ export class ItemListLayout extends React.Component<ItemListLayoutProps, ItemLis
           renderTableContents(item).map((content, index) => {
             const cellProps: TableCellProps = isReactNode(content) ? { children: content } : content;
             const headCell = renderTableHeader?.[index];
-            const cellSize = this.state.cellSizes[index];
+            const cellSize = this.cellSizes[index];
 
             if (copyClassNameFromHeadCells && headCell) {
               cellProps.className = cssNames(cellProps.className, headCell.className);
@@ -437,7 +430,7 @@ export class ItemListLayout extends React.Component<ItemListLayoutProps, ItemLis
           />
         )}
         {renderTableHeader.map((cellProps, index) => {
-          const cellSize = this.state.cellSizes[index];
+          const cellSize = this.cellSizes[index];
           const _cellProps = resizable ?
             { ...cellProps, _onResize: (width: number) => this.handleCellResize(index, width), resizable } :
             cellProps;
