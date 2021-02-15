@@ -44,7 +44,7 @@ export interface ItemListLayoutProps<T extends ItemObject = ItemObject> {
   preloadStores?: boolean;
   isClusterScoped?: boolean;
   hideFilters?: boolean;
-  resizable?: boolean;
+  isResizable?: boolean;
   searchFilters?: SearchFilter<T>[];
   filterItems?: ItemsFilter<T>[];
 
@@ -242,7 +242,7 @@ export class ItemListLayout extends React.Component<ItemListLayoutProps, ItemLis
   getRow(uid: string) {
     const {
       isSelectable, renderTableHeader, renderTableContents, renderItemMenu,
-      store, hasDetailsView, onDetails, resizable,
+      store, hasDetailsView, onDetails, isResizable: resizable,
       copyClassNameFromHeadCells, customizeTableRowProps, detailsItem,
     } = this.props;
     const { isSelected } = store;
@@ -287,7 +287,7 @@ export class ItemListLayout extends React.Component<ItemListLayoutProps, ItemLis
             }
 
             if (!headCell || !this.isHiddenColumn(headCell)) {
-              return <TableCell resizable={resizable} key={index} {...cellProps} />;
+              return <TableCell isResizable={resizable} key={index} {...cellProps} />;
             }
           })
         }
@@ -419,7 +419,7 @@ export class ItemListLayout extends React.Component<ItemListLayoutProps, ItemLis
   }
 
   renderTableHeader() {
-    const { customizeTableRowProps, renderTableHeader, isSelectable, isConfigurable, store, resizable } = this.props;
+    const { customizeTableRowProps, renderTableHeader, isSelectable, isConfigurable, store, isResizable: resizable } = this.props;
 
     if (!renderTableHeader) {
       return;
