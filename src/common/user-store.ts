@@ -9,6 +9,7 @@ import { getAppVersion } from "./utils/app-version";
 import { kubeConfigDefaultPath, loadConfig } from "./kube-helpers";
 import { appEventBus } from "./event-bus";
 import logger from "../main/logger";
+import { TableSizeConfig } from "./table-size-config";
 import path from "path";
 
 export interface UserStoreModel {
@@ -28,6 +29,7 @@ export interface UserPreferences {
   downloadBinariesPath?: string;
   kubectlBinariesPath?: string;
   openAtLogin?: boolean;
+  tableSizeConfig?: TableSizeConfig;
   hiddenTableColumns?: Record<string, string[]>
 }
 
@@ -56,6 +58,7 @@ export class UserStore extends BaseStore<UserStoreModel> {
     downloadKubectlBinaries: true,  // Download kubectl binaries matching cluster version
     openAtLogin: false,
     hiddenTableColumns: {},
+    tableSizeConfig: {},
   };
 
   protected async handleOnLoad() {
