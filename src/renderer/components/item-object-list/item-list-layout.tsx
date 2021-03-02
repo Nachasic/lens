@@ -128,6 +128,10 @@ export class ItemListLayout extends React.Component<ItemListLayoutProps> {
     const defaultUserSettings = toJS(this.userSettings);
     const storage = createStorage<ItemListLayoutUserSettings>("items_list_layout", defaultUserSettings);
 
+    if (props.isResizable) {
+      this.cellSizes = this.persistentCellSizes;
+    }
+
     Object.assign(this.userSettings, storage.get()); // restore
     disposeOnUnmount(this, [
       reaction(() => toJS(this.userSettings), settings => storage.set(settings)),
@@ -135,14 +139,10 @@ export class ItemListLayout extends React.Component<ItemListLayoutProps> {
   }
 
   async componentDidMount() {
-    const { isClusterScoped, isConfigurable, tableId, preloadStores, isResizable } = this.props;
+    const { isClusterScoped, isConfigurable, tableId, preloadStores } = this.props;
 
     if (isConfigurable && !tableId) {
       throw new Error("[ItemListLayout]: configurable list require props.tableId to be specified");
-    }
-
-    if (isResizable) {
-      this.cellSizes = this.persistentCellSizes;
     }
 
     if (preloadStores) {
@@ -242,7 +242,6 @@ export class ItemListLayout extends React.Component<ItemListLayoutProps> {
   }
 
   persistCellSizes() {
-    console.log("Persisting sizes");
     this.persistentCellSizes = this.cellSizes;
   }
 
@@ -450,18 +449,14 @@ export class ItemListLayout extends React.Component<ItemListLayoutProps> {
           />
         )}
         {renderTableHeader.map((cellProps, index) => {
-          const cellSize = this.cellSizes[index];
           const _cellProps = isResizable ?
             { 
               ...cellProps, 
               _onResize: (width: number) => this.handleCellResize(index, width),
               _onResizeComplete: () => this.persistCellSizes(),
+              size: this.cellSizes[index],
               isResizable 
             } : cellProps;
-
-          if (cellSize !== undefined) {
-            _cellProps.size = cellSize;
-          }
 
           if (!this.isHiddenColumn(cellProps)) {
             return <TableCell key={cellProps.id ?? index} {..._cellProps} />;
